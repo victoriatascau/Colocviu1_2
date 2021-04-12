@@ -17,6 +17,10 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
     private TextView allTermsTextView;
     private Button computeButton;
 
+    private int sum = 0;
+
+    private boolean modified = false;
+
     private class ButtonClickListener implements View.OnClickListener {
         @Override
         public void onClick (View view) {
@@ -30,13 +34,21 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
                             } else {
                                 allTermsTextView.setText(all + " + " + number);
                             }
+                            modified = true;
                         }
                     break;
                 case R.id.compute_button:
-                    Intent intent = new Intent(getApplicationContext(), Colocviu1_2SecondaryActivity.class);
-                    String sumText = allTermsTextView.getText().toString();
-                    intent.putExtra(Constants.SUM, sumText);
-                    startActivityForResult(intent, Constants.REQUEST_CODE);
+                    if (modified == true) {
+                        Intent intent = new Intent(getApplicationContext(), Colocviu1_2SecondaryActivity.class);
+                        String sumText = allTermsTextView.getText().toString();
+                        intent.putExtra(Constants.SUM, sumText);
+                        startActivityForResult(intent, Constants.REQUEST_CODE);
+                        modified = false;
+                    }
+                    else {
+                        Toast.makeText(getApplicationContext(), "Result is: " + sum, Toast.LENGTH_LONG).show();
+                        modified = false;
+                    }
                     break;
             }
         }
@@ -60,7 +72,21 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == Constants.REQUEST_CODE) {
+            sum = intent.getIntExtra(Constants.RESULT, -1);
             Toast.makeText(this, "The activity returned with result " + intent.getIntExtra(Constants.RESULT, -1), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstance) {
+        super.onSaveInstanceState(savedInstance);
+        savedInstance.putInt(Constants.SAVE, sum);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstance) {
+        if (savedInstance.containsKey(Constants.SAVE)) {
+            sum = savedInstance.getInt(Constants.SAVE);
         }
     }
 

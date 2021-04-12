@@ -6,4 +6,6 @@ public interface Constants {
     final public static int REQUEST_CODE = 1234;
 
     final public static String RESULT = "result";
+
+    final public static String SAVE = "save";
 }
