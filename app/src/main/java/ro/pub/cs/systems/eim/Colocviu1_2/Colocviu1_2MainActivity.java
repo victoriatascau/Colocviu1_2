@@ -2,8 +2,12 @@ package ro.pub.cs.systems.eim.Colocviu1_2;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,6 +25,10 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
 
     private boolean modified = false;
 
+    private int serviceStatus = Constants.SERVICE_STOPPED;
+
+    private IntentFilter intentFilter = new IntentFilter();
+
     private class ButtonClickListener implements View.OnClickListener {
         @Override
         public void onClick (View view) {
@@ -35,6 +43,13 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
                                 allTermsTextView.setText(all + " + " + number);
                             }
                             modified = true;
+                        }
+
+                        if (sum > 10 && serviceStatus == Constants.SERVICE_STOPPED) {
+                            Intent intent = new Intent(getApplicationContext(), Colocviu1_2Service.class);
+                            intent.putExtra(Constants.SUM, sum);
+                            startService(intent);
+                            serviceStatus = Constants.SERVICE_STARTED;
                         }
                     break;
                 case R.id.compute_button:
@@ -55,6 +70,15 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
     }
     ButtonClickListener buttonClickListener = new ButtonClickListener();
 
+    private class MessageBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //Log.d(Constants.BROADCAST_RECEIVER_TAG, intent.getStringExtra(Constants.BROADCAST_RECEIVER_EXTRA));
+            Toast.makeText(getApplicationContext(), "Received message is: " + intent.getStringExtra(Constants.BROADCAST_RECEIVER_EXTRA), Toast.LENGTH_LONG).show();
+        }
+    }
+    private MessageBroadcastReceiver messageBroadcastReceiver = new MessageBroadcastReceiver();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +90,8 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
         allTermsTextView = (TextView)findViewById(R.id.all_terms_text_view);
         computeButton = (Button)findViewById(R.id.compute_button);
         computeButton.setOnClickListener(buttonClickListener);
+
+        intentFilter.addAction(Constants.actionSum);
     }
 
     @Override
@@ -88,6 +114,25 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
         if (savedInstance.containsKey(Constants.SAVE)) {
             sum = savedInstance.getInt(Constants.SAVE);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(messageBroadcastReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(messageBroadcastReceiver);
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Intent intent = new Intent(this, Colocviu1_2Service.class);
+        stopService(intent);
+        super.onDestroy();
     }
 
 }
